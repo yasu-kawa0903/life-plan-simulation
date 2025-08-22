@@ -1,0 +1,38 @@
+/* 全体の設定 */
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f7f6;
+}
+
+/* ヘッダーのスタイル */
+header {
+  background-color: #333;
+  color: #fff;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+/* ナビゲーション（タブ）のスタイル */
+nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 20px;
+}
+
+nav li a {
+  color: #fff;
+  text-decoration: none;
+  padding: 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+nav li a:hover {
+  background-color: #555;
+  border-radius: 5px;
+}
