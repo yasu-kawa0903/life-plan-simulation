@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Header from './components/Header';
 import BasicInfoForm from './components/BasicInfoForm';
 import IncomeForm from './components/IncomeForm';
-import ExpenseForm from './components/ExpenseForm';
+import ExpenseForm from './components/ExpenseForm/index.js';
 import AssetForm from './components/AssetForm';
 import ResultDisplay from './components/ResultDisplay';
 import './styles.css';
@@ -10,16 +10,12 @@ import './styles.css';
 function App() {
   const [currentTab, setCurrentTab] = useState('basic-info');
   const [simulationData, setSimulationData] = useState([]);
-  // 入力欄の初期値設定
+  // 入力欄,初期値設定
   const [formData, setFormData] = useState({
     // 基本情報
     age: 30,
     spouseAge: 30,
     savings: 1000,
-    monthlyExpenses: 25,
-    housing: 10,
-    car: 5,
-    education: 0,
     additionalSavings: 0,
     investmentReturn: 0,
     // 収入ページ
@@ -39,7 +35,41 @@ function App() {
     otherIncome2: 0,
     otherIncome3: 0,
     otherIncome4: 0,
-    otherIncome5: 0
+    otherIncome5: 0,
+    // 支出ページ
+    livingExpenses: 0,
+    // 固定費
+    fixedCosts: {
+      waterHeat: { amount: 1.5, inflation: 2, changes: [] },
+      telecom: { amount: 1, inflation: 0, changes: [] },
+      insurance: { amount: 2, inflation: 1, changes: [] },
+      subscription: { amount: 0.5, inflation: 0, changes: [] },
+      socialInsurance: { amount: 5, inflation: 2, changes: [] },
+      other: { amount: 1, inflation: 2, changes: [] },
+    },
+    // 変動費
+    variableCosts: {
+      food: { amount: 5, inflation: 3, changes: [] },
+      dailyGoods: { amount: 1, inflation: 2, changes: [] },
+      hobby: { amount: 2, inflation: 2, changes: [] },
+      beauty: { amount: 0.5, inflation: 2, changes: [] },
+      social: { amount: 1, inflation: 2, changes: [] },
+      transport: { amount: 0.5, inflation: 2, changes: [] },
+      education: { amount: 1, inflation: 2, changes: [] },
+      health: { amount: 0.5, inflation: 2, changes: [] },
+      allowance: { amount: 2, inflation: 2, changes: [] },
+      other: { amount: 1, inflation: 2, changes: [] },
+    },
+    // ライフスタイル変更のチェックボックス状態
+    livingStyleChange: false,
+    housingCost: 10,
+    carCost: 5,
+    educationCost: 0,
+    otherExpense1:0,    
+    otherExpense2:0,    
+    otherExpense3:0,    
+    otherExpense4:0,    
+    otherExpense5:0,    
   });
 
 
@@ -49,10 +79,32 @@ function App() {
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: Number(value)
-    }));
+    const numericValue = Number(value);
+
+    setFormData(prevData =>{
+      // ネストされたプロパティを更新するためのロジック
+      const [category, subCategory, field] = name.split('-');
+
+      // LivingExpenseFormかrの更新の場合
+      if (category && subCategory && field) {
+        return {
+          ...prevData,
+          [category]: {
+            ...prevData[category],
+            [subCategory]: {
+              ...prevData[category][subCategory],
+              [field]: numericValue
+            }
+          }
+        };
+      }
+
+      // 他のフォームからの更新の場合
+      return {
+        ...prevData,
+        [name]: numericValue
+      };
+    });
   };
 
   // 計算ロジックを独立した関数にまとめる
