@@ -81,28 +81,48 @@ function App() {
     const { name, value } = e.target;
     const numericValue = Number(value);
 
-    setFormData(prevData =>{
-      // ネストされたプロパティを更新するためのロジック
-      const [category, subCategory, field] = name.split('-');
+    // LivingexpenseFormからの特別のデータ形式の場合
+    if (name === 'livingExpenses' && typeof value === 'object') {
+      setFormData(value);
+      return;
+    }
 
-      // LivingExpenseFormかrの更新の場合
-      if (category && subCategory && field) {
-        return {
-          ...prevData,
-          [category]: {
-            ...prevData[category],
-            [subCategory]: {
-              ...prevData[category][subCategory],
-              [field]: numericValue
-            }
-          }
-        };
+    // ライフスタイル変更のage/amountまたはその他のinputの更新を処理
+    setFormData(prevData => {
+      // name を分割
+      const parts = name.split('-');
+      // 'fixedCosts'または'variableCosts'で始まるかチェック
+      const isLivingExpense = parts[0] === 'fixedCosts' || parts[0] === 'variableCosts';
+
+      if (isLivingExpense) {
+        const category = parts[0]; // fixedCosts or variableCosts
+        const subCategory = parts[1]; // waterHeat, telecom, etc
+        const fieldName = parts[2]; // amount, inflation, changes
+        const newData = {...prevData};
+        const numericValue = Number(value);
+
+        if (fieldName === 'change-active') {
+          // 変更反映のselect BOX
+          const isEnabled = value === 'true';
+          newData[category][subCategory].changes = isEnabled ? [{ age:0, amount:0 }] : [];
+        } else if (fieldName === 'changes') {
+          // 変更年/月額のinput
+          const index = Number(parts[3]);
+          const changeField = parts[4];
+          const changes = [...newData[category][subCategory].changes];
+          changes[index][changeField] = numericValue;
+          newData[category][subCategory].changes = changes;
+        } else {
+          // amount/inflation の input
+          newData[category][subCategory][fieldName] = numericValue;
+        }
+        return newData;
       }
 
-      // 他のフォームからの更新の場合
+      // 他のコンポーネントからの単純な入力の場合
       return {
         ...prevData,
-        [name]: numericValue
+        [name]: Number(value)
       };
     });
   };
