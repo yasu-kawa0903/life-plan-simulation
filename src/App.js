@@ -4,13 +4,14 @@ import BasicInfoForm from './components/BasicInfoForm';
 import IncomeForm from './components/IncomeForm';
 import ExpenseForm from './components/ExpenseForm/index.js';
 import AssetForm from './components/AssetForm';
+import HousingExpenseForm from './components/ExpenseForm/HousingExpenseForm.js';
 import ResultDisplay from './components/ResultDisplay';
 import './styles.css';
 
 function App() {
   const [currentTab, setCurrentTab] = useState('basic-info');
   const [simulationData, setSimulationData] = useState([]);
-  // 入力欄,初期値設定
+  
   const [formData, setFormData] = useState({
     // 基本情報
     age: 30,
@@ -37,8 +38,6 @@ function App() {
     otherIncome4: 0,
     otherIncome5: 0,
     // 支出ページ
-    livingExpenses: 0,
-    // 固定費
     fixedCosts: {
       waterHeat: { amount: 1.5, inflation: 2, changes: [] },
       telecom: { amount: 1, inflation: 0, changes: [] },
@@ -47,7 +46,6 @@ function App() {
       socialInsurance: { amount: 5, inflation: 2, changes: [] },
       other: { amount: 1, inflation: 2, changes: [] },
     },
-    // 変動費
     variableCosts: {
       food: { amount: 5, inflation: 3, changes: [] },
       dailyGoods: { amount: 1, inflation: 2, changes: [] },
@@ -60,9 +58,52 @@ function App() {
       allowance: { amount: 2, inflation: 2, changes: [] },
       other: { amount: 1, inflation: 2, changes: [] },
     },
-    // ライフスタイル変更のチェックボックス状態
-    livingStyleChange: false,
-    housingCost: 10,
+    // 住宅費データ
+    housingData: {
+      housingType: '持ち家',
+      ownedHouse: {
+        hasLoan: 'あり',
+        loanBalance: 0,
+        remainingTerm: 0,
+        interestRate: 0,
+        interestType: '変動金利',
+        propertyTax: 0,
+        fireInsurance: 0,
+        earthquakeInsurance: 0,
+        dwellingType: 'マンション',
+        maintenanceReserve: 0,
+        commonAreaFee: 0,
+        houseRepairCost: 0,
+        other: 0,
+      },
+      rentalHouse: {
+        rentAndCommonFee: 0,
+        renewalFee: 0,
+        movingCost: 0,
+        other: 0,
+      },
+      purchasePlan: {
+        hasPlan: 'なし',
+        purchaseAge: 0,
+        purchasePrice: 0,
+        miscCost: 0,
+        hasLoan: 'あり',
+        downPayment: 0,
+        loanAmount: 0,
+        repaymentTerm: 0,
+        loanInterestRate: 0,
+        loanInterestType: '変動金利',
+        dwellingType: 'マンション',
+        propertyTax: 0,
+        fireInsurance: 0,
+        earthquakeInsurance: 0,
+        maintenanceReserve: 0,
+        commonAreaFee: 0,
+        houseRepairCost: 0,
+        other: 0,
+      }
+    },
+    // その他の費用
     carCost: 5,
     educationCost: 0,
     otherExpense1:0,    
@@ -72,64 +113,47 @@ function App() {
     otherExpense5:0,    
   });
 
-
   const handleTabChange = (tab) => {
     setCurrentTab(tab);
   };
 
+  // フォーム全体の変更を処理する汎用関数
   const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    const numericValue = Number(value);
+    const { name, value, type } = e.target;
+    // 数値型に変換、NaNの場合は0に
+    const parsedValue = type === 'number' ? Number(value) || 0 : value;
 
-    // LivingexpenseFormからの特別のデータ形式の場合
-    if (name === 'livingExpenses' && typeof value === 'object') {
-      setFormData(value);
-      return;
-    }
-
-    // ライフスタイル変更のage/amountまたはその他のinputの更新を処理
     setFormData(prevData => {
-      // name を分割
-      const parts = name.split('-');
-      // 'fixedCosts'または'variableCosts'で始まるかチェック
-      const isLivingExpense = parts[0] === 'fixedCosts' || parts[0] === 'variableCosts';
-
-      if (isLivingExpense) {
-        const category = parts[0]; // fixedCosts or variableCosts
-        const subCategory = parts[1]; // waterHeat, telecom, etc
-        const fieldName = parts[2]; // amount, inflation, changes
-        const newData = {...prevData};
-        const numericValue = Number(value);
-
-        if (fieldName === 'change-active') {
-          // 変更反映のselect BOX
-          const isEnabled = value === 'true';
-          newData[category][subCategory].changes = isEnabled ? [{ age:0, amount:0 }] : [];
-        } else if (fieldName === 'changes') {
-          // 変更年/月額のinput
-          const index = Number(parts[3]);
-          const changeField = parts[4];
-          const changes = [...newData[category][subCategory].changes];
-          changes[index][changeField] = numericValue;
-          newData[category][subCategory].changes = changes;
-        } else {
-          // amount/inflation の input
-          newData[category][subCategory][fieldName] = numericValue;
+      // nameをドットで分割して、ネストされたプロパティにアクセス
+      const parts = name.split('.');
+      let newData = { ...prevData };
+      let current = newData;
+      
+      // 最後の要素以外のパスをたどる
+      for (let i = 0; i < parts.length - 1; i++) {
+        current = current[parts[i]];
+      }
+      // 最後の要素に値をセット
+      current[parts[parts.length - 1]] = parsedValue;
+      
+      // ライフスタイル変更の特殊なケース
+      if (name.includes('changes') && name.includes('age')) {
+        // change-active の状態も更新
+        const changeActiveName = parts.slice(0, 3).join('.') + '.change-active';
+        if (newData[parts[0]][parts[1]][parts[2]].changes[0].age !== 0) {
+           newData[parts[0]][parts[1]][parts[2]]['change-active'] = 'true';
         }
-        return newData;
       }
 
-      // 他のコンポーネントからの単純な入力の場合
-      return {
-        ...prevData,
-        [name]: Number(value)
-      };
+      return newData;
     });
   };
 
   // 計算ロジックを独立した関数にまとめる
   const runSimulation = () => {
-    if (!formData.age || !formData.annualIncome || !formData.monthlyExpenses){
+    // 必須入力項目のチェック
+    if (!formData.age || !formData.annualIncome){
+      // ここにカスタムアラートUIを実装
       alert("すべての情報を入力してください。");
       return;
     }
@@ -138,17 +162,28 @@ function App() {
     let currentSavings = formData.savings;
     const retirementAge = 65;
     const finalAge = 100;
-    const investmentRate = Number(formData.investmentReturn) / 100  //パーセントを少数に変換
+    const investmentRate = Number(formData.investmentReturn) / 100;
 
     for (let age = Number(formData.age); age <= finalAge; age++) {
-      let annualIncome = Number(formData.annualIncome) + Number(formData.spouseIncome) + Number(formData.otherIncome);
-      let annualExpense = (Number(formData.monthlyExpenses) + Number(formData.housing) + Number(formData.car)) * 12 + Number(formData.education);
+      let annualIncome = Number(formData.annualIncome) + Number(formData.spouseIncome);
+      let annualExpense = 0; // 支出の計算を個別に開始
 
+      // 収入計算
+      // ...（既存の収入ロジック）
       if (age >= retirementAge) {
-        annualIncome = 240;
+        annualIncome += Number(formData.pensionAmount) + Number(formData.spousePensionAmount);
       }
-      
-      // ★追加貯蓄と投資リターンを考慮した新しい計算ロジック
+
+      // 支出計算
+      // 生活費
+      // ...（既存の生活費計算ロジック）
+
+      // 住宅費
+      // ...（住宅費の計算ロジックを追加予定）
+
+      // その他の費用
+      annualExpense += Number(formData.carCost) * 12 + Number(formData.educationCost);
+
       currentSavings = currentSavings * (1 + investmentRate) + (annualIncome - annualExpense) + Number(formData.additionalSavings);
 
       cashFlow.push({
@@ -158,7 +193,7 @@ function App() {
         savings: currentSavings
       });
     }
-    // ★forループの外に移動
+
     setSimulationData(cashFlow); 
     setCurrentTab('result');
   };
@@ -171,6 +206,7 @@ function App() {
         {currentTab === 'basic-info' && <BasicInfoForm formData={formData} onFormChange={handleFormChange} />}
         {currentTab === 'income' && <IncomeForm formData={formData} onFormChange={handleFormChange} />}
         {currentTab === 'expense' && <ExpenseForm formData={formData} onFormChange={handleFormChange} />}
+        {currentTab === 'housing' && <HousingExpenseForm formData={formData} onFormChange={handleFormChange} />}
         {currentTab === 'asset' && <AssetForm formData={formData} onFormChange={handleFormChange} />}
         {currentTab === 'result' && (
           <div>

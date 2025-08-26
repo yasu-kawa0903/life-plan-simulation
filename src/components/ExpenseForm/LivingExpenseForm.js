@@ -88,27 +88,23 @@ function LivingExpenseForm({ formData, onFormChange, onTotalChange }) {
       <tr key={name}>
         <td>{label}</td>
         <td>
-          <input type='number' name={`${category}-${name}-amount`} value={formData[category][name].amount} onChange={onFormChange} />
+          <input type='number' name={`${category}.${name}.amount`} value={formData[category][name].amount} onChange={onFormChange} />
         </td>
         <td>
-          <input type='number' name={`${category}-${name}-inflation`} value={formData[category][name].inflation} onChange={onFormChange} />
+          <input type='number' name={`${category}.${name}.inflation`} value={formData[category][name].inflation} onChange={onFormChange} />
         </td>
         <td>
           <select
-            name={`${category}-${name}-change-active`}
+            name={`${category}.${name}.change-active`}
             value={isChangeActive ? 'true' : 'false'}
             onChange={(e) => {
               const isEnabled = e.target.value === 'true';
-              const updatedFormData = {
-                ...formData,
-                [category]: {
-                  ...formData[category],
-                  [name]: {
-                    ...formData[category][name],
-                    changes: isEnabled ? [{ age: 0, amount: 0 }] : []
-                  }
-                }
-              };
+              const updatedFormData = { ...formData };
+              if (isEnabled) {
+                updatedFormData[category][name].changes = [{ age: 0, amount: 0 }];
+              } else {
+                updatedFormData[category][name].changes = [];
+              }
               onFormChange({ target: { name: 'livingExpenses', value: updatedFormData } });
             }}
           >
@@ -120,7 +116,7 @@ function LivingExpenseForm({ formData, onFormChange, onTotalChange }) {
         <td>
           <input
             type='number'
-            name={`${category}-${name}-changes-0-age`}
+            name={`${category}.${name}.changes.0.age`}
             value={formData[category][name].changes[0]?.age || ''}
             onChange={onFormChange}
             disabled={!isChangeActive}
@@ -130,7 +126,7 @@ function LivingExpenseForm({ formData, onFormChange, onTotalChange }) {
         <td>
           <input
             type='number'
-            name={`${category}-${name}-changes-0-amount`}
+            name={`${category}.${name}.changes.0.amount`}
             value={formData[category][name].changes[0]?.amount || ''}
             onChange={onFormChange}
             disabled={!isChangeActive}
