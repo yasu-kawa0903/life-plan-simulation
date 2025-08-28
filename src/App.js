@@ -129,6 +129,23 @@ function App() {
       let newData = { ...prevData };
       let current = newData;
       
+      // ライフスタイル変更の特殊なケースを先に処理
+      if (parts.length >= 3 && parts[2] === 'change-active') {
+        const category = parts[0]; // fixedCosts or variableCosts
+        const subCategory = parts[1]; // waterHeat, telecom, etc.
+        const isEnabled = value === 'true';
+
+        // 変更を反映するかどうかに応じて changes 配列を更新
+        if (isEnabled) {
+          // 「する」が選択された場合、changes配列に初期値をセット
+          newData[category][subCategory].changes = [{ age: 0, amount: 0 }];
+        } else {
+          // 「しない」が選択された場合、changes配列を空にする
+          newData[category][subCategory].changes = [];
+        }
+        return newData;
+      }
+
       // 最後の要素以外のパスをたどる
       for (let i = 0; i < parts.length - 1; i++) {
         current = current[parts[i]];
@@ -136,15 +153,6 @@ function App() {
       // 最後の要素に値をセット
       current[parts[parts.length - 1]] = parsedValue;
       
-      // ライフスタイル変更の特殊なケース
-      if (name.includes('changes') && name.includes('age')) {
-        // change-active の状態も更新
-        const changeActiveName = parts.slice(0, 3).join('.') + '.change-active';
-        if (newData[parts[0]][parts[1]][parts[2]].changes[0].age !== 0) {
-           newData[parts[0]][parts[1]][parts[2]]['change-active'] = 'true';
-        }
-      }
-
       return newData;
     });
   };

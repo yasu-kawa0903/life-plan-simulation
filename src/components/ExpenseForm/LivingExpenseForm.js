@@ -8,7 +8,8 @@ function LivingExpenseForm({ formData, onFormChange, onTotalChange }) {
   useEffect(() => {
     // ユーザーが変更年と月額の両方を入力した後にのみ計算を実行
     const shouldRunCalculation = (item) => {
-      return item.changes.length > 0 && item.changes[0].age !== 0 && item.changes[0].amount !== 0;
+      // 変更がアクティブで、かつageとamountが両方とも入力されているかを確認
+      return item.changes.length > 0 && item.changes[0].age !== null && item.changes[0].age !== '' && item.changes[0].amount !== null && item.changes[0].amount !== '';
     };
 
     const results = [];
@@ -31,10 +32,10 @@ function LivingExpenseForm({ formData, onFormChange, onTotalChange }) {
 
         if (shouldRunCalculation(item) && currentAge >= change.age) {
           // 変更年時点のインフレ率適用後の金額を基準にする
-          const inflationFactorAtChangeAge = Math.pow(1 + inflationRate, change.age - startAge);
+          const inflationFactorAtChangeAge = Math.pow(1 + inflationRate, Number(change.age) - startAge);
           const baseAmount = Number(change.amount);
           const inflatedBaseAmount = baseAmount * inflationFactorAtChangeAge;
-          currentAmount = inflatedBaseAmount * Math.pow(1 + inflationRate, currentAge - change.age);
+          currentAmount = inflatedBaseAmount * Math.pow(1 + inflationRate, currentAge - Number(change.age));
         } else {
           // 変更年以前の計算
           currentAmount = Number(item.amount) * Math.pow(1 + inflationRate, currentAge - startAge);
@@ -52,10 +53,10 @@ function LivingExpenseForm({ formData, onFormChange, onTotalChange }) {
 
         if (shouldRunCalculation(item) && currentAge >= change.age) {
           // 変更年時点のインフレ率適用後の金額を基準にする
-          const inflationFactorAtChangeAge = Math.pow(1 + inflationRate, change.age - startAge);
+          const inflationFactorAtChangeAge = Math.pow(1 + inflationRate, Number(change.age) - startAge);
           const baseAmount = Number(change.amount);
           const inflatedBaseAmount = baseAmount * inflationFactorAtChangeAge;
-          currentAmount = inflatedBaseAmount * Math.pow(1 + inflationRate, currentAge - change.age);
+          currentAmount = inflatedBaseAmount * Math.pow(1 + inflationRate, currentAge - Number(change.age));
         } else {
           // 変更年以前の計算
           currentAmount = Number(item.amount) * Math.pow(1 + inflationRate, currentAge - startAge);
@@ -81,32 +82,24 @@ function LivingExpenseForm({ formData, onFormChange, onTotalChange }) {
 
   // 各項目のレンダリングするヘルパー関数
   const renderTableRow = (category, name, label) => {
-    const isChangeActive = formData[category][name].changes.length > 0;
+    const item = formData[category][name];
+    const isChangeActive = item.changes.length > 0;
 
     // 入力表
     return (
       <tr key={name}>
         <td>{label}</td>
         <td>
-          <input type='number' name={`${category}.${name}.amount`} value={formData[category][name].amount} onChange={onFormChange} />
+          <input type='number' name={`${category}.${name}.amount`} value={item.amount || ''} onChange={onFormChange} />
         </td>
         <td>
-          <input type='number' name={`${category}.${name}.inflation`} value={formData[category][name].inflation} onChange={onFormChange} />
+          <input type='number' name={`${category}.${name}.inflation`} value={item.inflation || ''} onChange={onFormChange} />
         </td>
         <td>
           <select
             name={`${category}.${name}.change-active`}
             value={isChangeActive ? 'true' : 'false'}
-            onChange={(e) => {
-              const isEnabled = e.target.value === 'true';
-              const updatedFormData = { ...formData };
-              if (isEnabled) {
-                updatedFormData[category][name].changes = [{ age: 0, amount: 0 }];
-              } else {
-                updatedFormData[category][name].changes = [];
-              }
-              onFormChange({ target: { name: 'livingExpenses', value: updatedFormData } });
-            }}
+            onChange={onFormChange}
           >
             {changeOptions.map(option => (
               <option key={option.value} value={option.value}>{option.label}</option>
@@ -117,7 +110,7 @@ function LivingExpenseForm({ formData, onFormChange, onTotalChange }) {
           <input
             type='number'
             name={`${category}.${name}.changes.0.age`}
-            value={formData[category][name].changes[0]?.age || ''}
+            value={isChangeActive ? (item.changes[0]?.age || '') : ''}
             onChange={onFormChange}
             disabled={!isChangeActive}
             style={{ backgroundColor: !isChangeActive ? '#f0f0f0' : 'white' }}
@@ -127,7 +120,7 @@ function LivingExpenseForm({ formData, onFormChange, onTotalChange }) {
           <input
             type='number'
             name={`${category}.${name}.changes.0.amount`}
-            value={formData[category][name].changes[0]?.amount || ''}
+            value={isChangeActive ? (item.changes[0]?.amount || '') : ''}
             onChange={onFormChange}
             disabled={!isChangeActive}
             style={{ backgroundColor: !isChangeActive ? '#f0f0f0' : 'white' }}
