@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from "react";
 // 各コンポーネントをインポート
 import LivingExpenseForm from './LivingExpenseForm'
-import HousingExpenseForm from './HousingExpenseForm'
+import HousingExpenseForm from './HousingExpenseForm/index.js'
 import CarExpenseForm from './CarExpenseForm'
 import EducationExpenseForm from './EducationExpenseForm'
 import OtherExpenseForm from './OtherExpenseForm'

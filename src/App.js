@@ -4,7 +4,7 @@ import BasicInfoForm from './components/BasicInfoForm';
 import IncomeForm from './components/IncomeForm';
 import ExpenseForm from './components/ExpenseForm/index.js';
 import AssetForm from './components/AssetForm';
-import HousingExpenseForm from './components/ExpenseForm/HousingExpenseForm.js';
+import HousingExpenseForm from './components/ExpenseForm/HousingExpenseForm/index.js';
 import ResultDisplay from './components/ResultDisplay';
 import './styles.css';
 
