@@ -6,6 +6,12 @@ import CarExpenseForm from './CarExpenseForm'
 import EducationExpenseForm from './EducationExpenseForm'
 import OtherExpenseForm from './OtherExpenseForm'
 
+/**
+ * 支出に関するすべてのフォームと、年間支出の推移テーブルを統合するコンポーネントです。
+ * @param {object} props - コンポーネントのプロパティ
+ * @param {object} props.formData - アプリケーション全体のフォームデータ
+ * @param {function} props.onFormChange - フォームの変更を処理する関数
+ */
 function ExpenseForm({ formData, onFormChange }) {
   const [expenseResults, setExpenseResults] = useState([]);
   const [currentTab, setCurrentTab] = useState('living'); //サブタブの状態を管理

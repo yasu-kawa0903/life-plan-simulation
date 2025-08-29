@@ -4,7 +4,6 @@ import BasicInfoForm from './components/BasicInfoForm';
 import IncomeForm from './components/IncomeForm';
 import ExpenseForm from './components/ExpenseForm/index.js';
 import AssetForm from './components/AssetForm';
-import HousingExpenseForm from './components/ExpenseForm/HousingExpenseForm/index.js';
 import ResultDisplay from './components/ResultDisplay';
 import './styles.css';
 
@@ -67,20 +66,26 @@ function App() {
         remainingTerm: 0,
         interestRate: 0,
         interestType: '変動金利',
+        interestChangeCycle: 0,
+        interestChangeRate: 0,
         propertyTax: 0,
-        fireInsurance: 0,
-        earthquakeInsurance: 0,
+        fireInsurance: { amount: 0, cycle: 0, nextPaymentAge: 0 },
+        earthquakeInsurance: { amount: 0, cycle: 0, nextPaymentAge: 0 },
         dwellingType: 'マンション',
         maintenanceReserve: 0,
         commonAreaFee: 0,
-        houseRepairCost: 0,
-        other: 0,
+        repairCosts: Array.from({ length: 5 }, () => ({ amount: 0, cycle: 0, nextPaymentAge: 0 })),
+        otherMaintenanceCosts: Array.from({ length: 5 }, () => ({ amount: 0, cycle: 0, nextPaymentAge: 0 })),
+        otherCosts: Array.from({ length: 5 }, () => ({ amount: 0, cycle: 0, nextPaymentAge: 0 })),
       },
       rentalHouse: {
         rentAndCommonFee: 0,
-        renewalFee: 0,
-        movingCost: 0,
-        other: 0,
+        // 更新料をオブジェクトに変更
+        renewalFee: { amount: 0, cycle: 0, nextPaymentAge: 0 },
+        // 引越し費用をオブジェクトに変更
+        movingCost: { amount: 0, cycle: 0, nextPaymentAge: 0 },
+        // その他の費用を5つのオブジェクトの配列に変更
+        otherCosts: Array.from({ length: 5 }, () => ({ amount: 0, cycle: 0, nextPaymentAge: 0 })),
       },
       purchasePlan: {
         hasPlan: 'なし',
@@ -93,14 +98,19 @@ function App() {
         repaymentTerm: 0,
         loanInterestRate: 0,
         loanInterestType: '変動金利',
+        interestChangeCycle: 0,
+        interestChangeRate: 0,
+        fireInsurance: { amount: 0, cycle: 0 },
+        earthquakeInsurance: { amount: 0, cycle: 0 },
         dwellingType: 'マンション',
         propertyTax: 0,
         fireInsurance: 0,
         earthquakeInsurance: 0,
         maintenanceReserve: 0,
         commonAreaFee: 0,
-        houseRepairCost: 0,
-        other: 0,
+        repairCosts: Array.from({ length: 5 }, () => ({ amount: 0, cycle: 0 })),
+        otherMaintenanceCosts: Array.from({ length: 5 }, () => ({ amount: 0, cycle: 0 })),
+        otherCosts: Array.from({ length: 5 }, () => ({ amount: 0, cycle: 0 })),
       }
     },
     // その他の費用
@@ -124,35 +134,36 @@ function App() {
     const parsedValue = type === 'number' ? Number(value) || 0 : value;
 
     setFormData(prevData => {
-      // nameをドットで分割して、ネストされたプロパティにアクセス
-      const parts = name.split('.');
       let newData = { ...prevData };
       let current = newData;
       
-      // ライフスタイル変更の特殊なケースを先に処理
-      if (parts.length >= 3 && parts[2] === 'change-active') {
-        const category = parts[0]; // fixedCosts or variableCosts
-        const subCategory = parts[1]; // waterHeat, telecom, etc.
-        const isEnabled = value === 'true';
-
-        // 変更を反映するかどうかに応じて changes 配列を更新
-        if (isEnabled) {
-          // 「する」が選択された場合、changes配列に初期値をセット
-          newData[category][subCategory].changes = [{ age: 0, amount: 0 }];
+      // nameをドットで分割し、配列のインデックスを考慮してプロパティにアクセス
+      const parts = name.split('.');
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        const arrayMatch = part.match(/(.*)\[(\d+)\]/);
+        
+        if (arrayMatch) {
+          const arrayName = arrayMatch[1];
+          const index = parseInt(arrayMatch[2], 10);
+          if (!current[arrayName]) {
+            current[arrayName] = [];
+          }
+          if (!current[arrayName][index]) {
+            // 新しいオブジェクトを正しく初期化
+            const initialValue = { amount: 0, cycle: 0, nextPaymentAge: 0 };
+            current[arrayName][index] = initialValue;
+          }
+          current = current[arrayName][index];
+        } else if (i < parts.length - 1) {
+          if (!current[part]) {
+            current[part] = {};
+          }
+          current = current[part];
         } else {
-          // 「しない」が選択された場合、changes配列を空にする
-          newData[category][subCategory].changes = [];
+          current[part] = parsedValue;
         }
-        return newData;
       }
-
-      // 最後の要素以外のパスをたどる
-      for (let i = 0; i < parts.length - 1; i++) {
-        current = current[parts[i]];
-      }
-      // 最後の要素に値をセット
-      current[parts[parts.length - 1]] = parsedValue;
-      
       return newData;
     });
   };
@@ -214,7 +225,6 @@ function App() {
         {currentTab === 'basic-info' && <BasicInfoForm formData={formData} onFormChange={handleFormChange} />}
         {currentTab === 'income' && <IncomeForm formData={formData} onFormChange={handleFormChange} />}
         {currentTab === 'expense' && <ExpenseForm formData={formData} onFormChange={handleFormChange} />}
-        {currentTab === 'housing' && <HousingExpenseForm formData={formData} onFormChange={handleFormChange} />}
         {currentTab === 'asset' && <AssetForm formData={formData} onFormChange={handleFormChange} />}
         {currentTab === 'result' && (
           <div>
@@ -228,3 +238,4 @@ function App() {
 }
 
 export default App;
+
